@@ -1,3 +1,4 @@
+# Zig output files
 .zig-cache/
 zig-out/
 *.o
