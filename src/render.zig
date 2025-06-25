@@ -57,13 +57,13 @@ pub const Renderer = struct {
 
     /// OpenGL initialization boilerplate
     fn initGL(self: *Renderer) void {
-        const aspect_ratio = (@as(f32, @floatFromInt(self.window_width)) / @as(f32, @floatFromInt(self.window_height)));
+        // rendering settings
         gl.glViewport(0, 0, self.window_width, self.window_height);
-
         gl.glEnable(gl.GL_DEPTH_TEST);
         gl.glMatrixMode(gl.GL_PROJECTION);
+        const aspect_ratio = (@as(f32, @floatFromInt(self.window_width)) / @as(f32, @floatFromInt(self.window_height)));
         glu.gluPerspective(60.0, aspect_ratio, 1.0, 100.0);
-
+        // camera settings
         gl.glMatrixMode(gl.GL_MODELVIEW);
         gl.glLoadIdentity();
         glu.gluLookAt( //
@@ -109,7 +109,7 @@ pub const Renderer = struct {
         self.updateCamera();
         drawGrid();
         drawAxis();
-        drawTriangle();
+        drawCube();
 
         if (sdl.SDL_GL_SwapWindow(self.window) == false) {
             logErrorAndQuit("failed to swap buffer!");
@@ -121,7 +121,7 @@ pub const Renderer = struct {
     fn updateCamera(self: *Renderer) void {
         const deg: f32 = @floatFromInt(@as(usize, self.frame_counter % 360));
         const rad: f32 = std.math.degreesToRadians(deg);
-        const distance = 5;
+        const distance = 10;
         const camera_x = @sin(rad) * distance;
         const camera_z = @cos(rad) * distance;
         gl.glMatrixMode(gl.GL_MODELVIEW);
@@ -151,21 +151,79 @@ pub const Renderer = struct {
         gl.glEnd();
     }
 
+    /// draw cube at the center
+    fn drawCube() void {
+        const size = 1;
+        const dark = 0x44;
+        const light = 0xFF;
+        // top face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(dark, dark, 0x00);
+        gl.glVertex3f(size, size, size);
+        gl.glVertex3f(-size, size, size);
+        gl.glColor3ub(light, light, 0x00);
+        gl.glVertex3f(-size, size, -size);
+        gl.glVertex3f(size, size, -size);
+        gl.glEnd();
+        // bottom face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(dark, dark, 0x00);
+        gl.glVertex3f(size, -size, size);
+        gl.glVertex3f(-size, -size, size);
+        gl.glVertex3f(-size, -size, -size);
+        gl.glVertex3f(size, -size, -size);
+        gl.glEnd();
+        // north face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(dark, 0x00, 0x00);
+        gl.glVertex3f(size, size, size);
+        gl.glVertex3f(size, -size, size);
+        gl.glColor3ub(light, 0x00, 0x00);
+        gl.glVertex3f(size, -size, -size);
+        gl.glVertex3f(size, size, -size);
+        gl.glEnd();
+        // south face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(dark, 0x00, 0x00);
+        gl.glVertex3f(-size, size, size);
+        gl.glVertex3f(-size, -size, size);
+        gl.glColor3ub(light, 0x00, 0x00);
+        gl.glVertex3f(-size, -size, -size);
+        gl.glVertex3f(-size, size, -size);
+        gl.glEnd();
+        // east face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(0x00, 0x00, dark);
+        gl.glVertex3f(size, size, size);
+        gl.glVertex3f(-size, size, size);
+        gl.glVertex3f(-size, -size, size);
+        gl.glVertex3f(size, -size, size);
+        gl.glEnd();
+        // west face
+        gl.glBegin(gl.GL_TRIANGLE_FAN);
+        gl.glColor3ub(0x00, 0x00, light);
+        gl.glVertex3f(size, size, -size);
+        gl.glVertex3f(-size, size, -size);
+        gl.glVertex3f(-size, -size, -size);
+        gl.glVertex3f(size, -size, -size);
+        gl.glEnd();
+    }
+
     /// draws axis lines
     fn drawAxis() void {
         gl.glBegin(gl.GL_LINES);
         // yellow Y axis
         gl.glColor3ub(0xFF, 0xFF, 0x00);
         gl.glVertex3d(0.0, 0.0, 0.0);
-        gl.glVertex3d(0.0, 10.0, 0.0);
+        gl.glVertex3d(0.0, 40.0, 0.0);
         // red X axis
         gl.glColor3ub(0xFF, 0x00, 0x00);
         gl.glVertex3d(0.0, 0.0, 0.0);
-        gl.glVertex3d(10.0, 0.0, 0.0);
+        gl.glVertex3d(40.0, 0.0, 0.0);
         // blue Z axis
         gl.glColor3ub(0x00, 0x00, 0xFF);
         gl.glVertex3d(0.0, 0.0, 0.0);
-        gl.glVertex3d(0.0, 0.0, 10.0);
+        gl.glVertex3d(0.0, 0.0, 40.0);
         gl.glEnd();
     }
 
