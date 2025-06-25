@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
 });
@@ -16,6 +17,7 @@ pub const Renderer = struct {
     window_width: i32,
     window_height: i32,
     is_running: bool,
+    frame_counter: usize,
 
     /// internal SDL and OpenGL variables
     window: ?*sdl.SDL_Window = null,
@@ -28,6 +30,7 @@ pub const Renderer = struct {
             .window_width = width,
             .window_height = height,
             .is_running = true,
+            .frame_counter = 0,
         };
         result.initSDL();
         result.initGL();
@@ -56,14 +59,16 @@ pub const Renderer = struct {
     fn initGL(self: *Renderer) void {
         const aspect_ratio = (@as(f32, @floatFromInt(self.window_width)) / @as(f32, @floatFromInt(self.window_height)));
         gl.glViewport(0, 0, self.window_width, self.window_height);
+
         gl.glEnable(gl.GL_DEPTH_TEST);
         gl.glMatrixMode(gl.GL_PROJECTION);
-        gl.glLoadIdentity();
         glu.gluPerspective(60.0, aspect_ratio, 1.0, 100.0);
+
         gl.glMatrixMode(gl.GL_MODELVIEW);
+        gl.glLoadIdentity();
         glu.gluLookAt( //
-            0.0, 0.0, 5.0, // eye pos
-            0.0, 0.0, 0.0, // look at pos
+            5.0, 5.0, 5.0, // camera position
+            0.0, 0.0, 0.0, // target position
             0.0, 1.0, 0.0 //  up vector
         );
     }
@@ -101,19 +106,86 @@ pub const Renderer = struct {
     pub fn renderFrame(self: *Renderer) void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
-        // Draw a colored triangle
-        gl.glBegin(gl.GL_TRIANGLES);
-        gl.glColor3f(1.0, 0.0, 0.0);
-        gl.glVertex3f(-1.0, -1.0, 0.0);
-        gl.glColor3f(0.0, 1.0, 0.0);
-        gl.glVertex3f(1.0, -1.0, 0.0);
-        gl.glColor3f(0.0, 0.0, 1.0);
-        gl.glVertex3f(0.0, 1.0, 0.0);
-        gl.glEnd();
+        self.updateCamera();
+        drawGrid();
+        drawAxis();
+        drawTriangle();
 
         if (sdl.SDL_GL_SwapWindow(self.window) == false) {
             logErrorAndQuit("failed to swap buffer!");
         }
+        self.frame_counter += 1;
+    }
+
+    /// updates rotating camera
+    fn updateCamera(self: *Renderer) void {
+        const deg: f32 = @floatFromInt(@as(usize, self.frame_counter % 360));
+        const rad: f32 = std.math.degreesToRadians(deg);
+        const distance = 5;
+        const camera_x = @sin(rad) * distance;
+        const camera_z = @cos(rad) * distance;
+        gl.glMatrixMode(gl.GL_MODELVIEW);
+        gl.glLoadIdentity();
+        glu.gluLookAt(
+            camera_x,
+            distance,
+            camera_z,
+            0,
+            0,
+            0,
+            0.0,
+            1.0,
+            0.0,
+        );
+    }
+
+    /// draws RGB triangle
+    fn drawTriangle() void {
+        gl.glBegin(gl.GL_TRIANGLES);
+        gl.glColor3ub(0xFF, 0x00, 0x00);
+        gl.glVertex3f(-1.0, -1.0, 0.0);
+        gl.glColor3ub(0x00, 0xFF, 0x00);
+        gl.glVertex3f(1.0, -1.0, 0.0);
+        gl.glColor3ub(0x00, 0x00, 0xFF);
+        gl.glVertex3f(0.0, 1.0, 0.0);
+        gl.glEnd();
+    }
+
+    /// draws axis lines
+    fn drawAxis() void {
+        gl.glBegin(gl.GL_LINES);
+        // yellow Y axis
+        gl.glColor3ub(0xFF, 0xFF, 0x00);
+        gl.glVertex3d(0.0, 0.0, 0.0);
+        gl.glVertex3d(0.0, 10.0, 0.0);
+        // red X axis
+        gl.glColor3ub(0xFF, 0x00, 0x00);
+        gl.glVertex3d(0.0, 0.0, 0.0);
+        gl.glVertex3d(10.0, 0.0, 0.0);
+        // blue Z axis
+        gl.glColor3ub(0x00, 0x00, 0xFF);
+        gl.glVertex3d(0.0, 0.0, 0.0);
+        gl.glVertex3d(0.0, 0.0, 10.0);
+        gl.glEnd();
+    }
+
+    /// draws X-Z axis grid lines
+    fn drawGrid() void {
+        const linecount = 20;
+        const spacing = 2;
+        const length = (linecount * spacing) / 2;
+        var i: i32 = (linecount / 2) * -1;
+        gl.glBegin(gl.GL_LINES);
+        gl.glColor3ub(0x33, 0x33, 0x33);
+        while (i < (linecount / 2)) : (i += 1) {
+            // x parallel lines
+            gl.glVertex3i(length * -1, 0, i * spacing);
+            gl.glVertex3i(length, 0, i * spacing);
+            // z parallel lines
+            gl.glVertex3i(i * spacing, 0, length * -1);
+            gl.glVertex3i(i * spacing, 0, length);
+        }
+        gl.glEnd();
     }
 
     /// Automatically handles error logging
