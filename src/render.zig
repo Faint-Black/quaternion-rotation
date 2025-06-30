@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const vec = @import("vector.zig");
 
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
@@ -10,6 +11,33 @@ const gl = @cImport({
 const glu = @cImport({
     @cInclude("GL/glu.h");
 });
+
+pub const cube_vertices_base = [24]@Vector(3, f32){
+    @Vector(3, f32){ 1.0, 1.0, 1.0 },
+    @Vector(3, f32){ -1.0, 1.0, 1.0 },
+    @Vector(3, f32){ -1.0, 1.0, -1.0 },
+    @Vector(3, f32){ 1.0, 1.0, -1.0 },
+    @Vector(3, f32){ 1.0, -1.0, 1.0 },
+    @Vector(3, f32){ -1.0, -1.0, 1.0 },
+    @Vector(3, f32){ -1.0, -1.0, -1.0 },
+    @Vector(3, f32){ 1.0, -1.0, -1.0 },
+    @Vector(3, f32){ 1.0, 1.0, 1.0 },
+    @Vector(3, f32){ 1.0, -1.0, 1.0 },
+    @Vector(3, f32){ 1.0, -1.0, -1.0 },
+    @Vector(3, f32){ 1.0, 1.0, -1.0 },
+    @Vector(3, f32){ -1.0, 1.0, 1.0 },
+    @Vector(3, f32){ -1.0, -1.0, 1.0 },
+    @Vector(3, f32){ -1.0, -1.0, -1.0 },
+    @Vector(3, f32){ -1.0, 1.0, -1.0 },
+    @Vector(3, f32){ 1.0, 1.0, 1.0 },
+    @Vector(3, f32){ -1.0, 1.0, 1.0 },
+    @Vector(3, f32){ -1.0, -1.0, 1.0 },
+    @Vector(3, f32){ 1.0, -1.0, 1.0 },
+    @Vector(3, f32){ 1.0, 1.0, -1.0 },
+    @Vector(3, f32){ -1.0, 1.0, -1.0 },
+    @Vector(3, f32){ -1.0, -1.0, -1.0 },
+    @Vector(3, f32){ 1.0, -1.0, -1.0 },
+};
 
 pub const Renderer = struct {
     /// core variables
@@ -102,14 +130,14 @@ pub const Renderer = struct {
         }
     }
 
-    /// Renders the frame
-    pub fn renderFrame(self: *Renderer) void {
+    /// Renders the frame and input cube vertices
+    pub fn renderFrame(self: *Renderer, cube_vertices: [24]@Vector(3, f32)) void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
 
         self.updateCamera();
         drawGrid();
         drawAxis();
-        drawCube();
+        drawCube(cube_vertices);
 
         if (sdl.SDL_GL_SwapWindow(self.window) == false) {
             logErrorAndQuit("failed to swap buffer!");
@@ -139,73 +167,60 @@ pub const Renderer = struct {
         );
     }
 
-    /// draws RGB triangle
-    fn drawTriangle() void {
-        gl.glBegin(gl.GL_TRIANGLES);
-        gl.glColor3ub(0xFF, 0x00, 0x00);
-        gl.glVertex3f(-1.0, -1.0, 0.0);
-        gl.glColor3ub(0x00, 0xFF, 0x00);
-        gl.glVertex3f(1.0, -1.0, 0.0);
-        gl.glColor3ub(0x00, 0x00, 0xFF);
-        gl.glVertex3f(0.0, 1.0, 0.0);
-        gl.glEnd();
-    }
-
     /// draw cube at the center
-    fn drawCube() void {
-        const size = 1;
+    fn drawCube(v: [24]@Vector(3, f32)) void {
         const dark = 0x44;
         const light = 0xFF;
         // top face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(dark, dark, 0x00);
-        gl.glVertex3f(size, size, size);
-        gl.glVertex3f(-size, size, size);
+        gl.glVertex3f(v[0][0], v[0][1], v[0][2]);
+        gl.glVertex3f(v[1][0], v[1][1], v[1][2]);
         gl.glColor3ub(light, light, 0x00);
-        gl.glVertex3f(-size, size, -size);
-        gl.glVertex3f(size, size, -size);
+        gl.glVertex3f(v[2][0], v[2][1], v[2][2]);
+        gl.glVertex3f(v[3][0], v[3][1], v[3][2]);
         gl.glEnd();
         // bottom face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(dark, dark, 0x00);
-        gl.glVertex3f(size, -size, size);
-        gl.glVertex3f(-size, -size, size);
-        gl.glVertex3f(-size, -size, -size);
-        gl.glVertex3f(size, -size, -size);
+        gl.glVertex3f(v[4][0], v[4][1], v[4][2]);
+        gl.glVertex3f(v[5][0], v[5][1], v[5][2]);
+        gl.glVertex3f(v[6][0], v[6][1], v[6][2]);
+        gl.glVertex3f(v[7][0], v[7][1], v[7][2]);
         gl.glEnd();
         // north face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(dark, 0x00, 0x00);
-        gl.glVertex3f(size, size, size);
-        gl.glVertex3f(size, -size, size);
+        gl.glVertex3f(v[8][0], v[8][1], v[8][2]);
+        gl.glVertex3f(v[9][0], v[9][1], v[9][2]);
         gl.glColor3ub(light, 0x00, 0x00);
-        gl.glVertex3f(size, -size, -size);
-        gl.glVertex3f(size, size, -size);
+        gl.glVertex3f(v[10][0], v[10][1], v[10][2]);
+        gl.glVertex3f(v[11][0], v[11][1], v[11][2]);
         gl.glEnd();
         // south face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(dark, 0x00, 0x00);
-        gl.glVertex3f(-size, size, size);
-        gl.glVertex3f(-size, -size, size);
+        gl.glVertex3f(v[12][0], v[12][1], v[12][2]);
+        gl.glVertex3f(v[13][0], v[13][1], v[13][2]);
         gl.glColor3ub(light, 0x00, 0x00);
-        gl.glVertex3f(-size, -size, -size);
-        gl.glVertex3f(-size, size, -size);
+        gl.glVertex3f(v[14][0], v[14][1], v[14][2]);
+        gl.glVertex3f(v[15][0], v[15][1], v[15][2]);
         gl.glEnd();
         // east face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(0x00, 0x00, dark);
-        gl.glVertex3f(size, size, size);
-        gl.glVertex3f(-size, size, size);
-        gl.glVertex3f(-size, -size, size);
-        gl.glVertex3f(size, -size, size);
+        gl.glVertex3f(v[16][0], v[16][1], v[16][2]);
+        gl.glVertex3f(v[17][0], v[17][1], v[17][2]);
+        gl.glVertex3f(v[18][0], v[18][1], v[18][2]);
+        gl.glVertex3f(v[19][0], v[19][1], v[19][2]);
         gl.glEnd();
         // west face
         gl.glBegin(gl.GL_TRIANGLE_FAN);
         gl.glColor3ub(0x00, 0x00, light);
-        gl.glVertex3f(size, size, -size);
-        gl.glVertex3f(-size, size, -size);
-        gl.glVertex3f(-size, -size, -size);
-        gl.glVertex3f(size, -size, -size);
+        gl.glVertex3f(v[20][0], v[20][1], v[20][2]);
+        gl.glVertex3f(v[21][0], v[21][1], v[21][2]);
+        gl.glVertex3f(v[22][0], v[22][1], v[22][2]);
+        gl.glVertex3f(v[23][0], v[23][1], v[23][2]);
         gl.glEnd();
     }
 
