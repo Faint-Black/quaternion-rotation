@@ -13,7 +13,7 @@ pub fn main() void {
     // transform vertices here
     for (&cube_vertices) |*v| {
         const transform = @Vector(9, f32){
-            1, 1, 1,
+            1, 1, 0,
             0, 1, 0,
             0, 0, 1,
         };

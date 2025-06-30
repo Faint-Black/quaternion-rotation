@@ -151,12 +151,13 @@ pub const Renderer = struct {
         const rad: f32 = std.math.degreesToRadians(deg);
         const distance = 10;
         const camera_x = @sin(rad) * distance;
+        const camera_y = @sin(rad) * distance;
         const camera_z = @cos(rad) * distance;
         gl.glMatrixMode(gl.GL_MODELVIEW);
         gl.glLoadIdentity();
         glu.gluLookAt(
             camera_x,
-            distance,
+            camera_y,
             camera_z,
             0,
             0,
