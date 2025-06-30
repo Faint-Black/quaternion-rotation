@@ -12,7 +12,7 @@ const glu = @cImport({
     @cInclude("GL/glu.h");
 });
 
-pub const cube_vertices_base = [24]@Vector(3, f32){
+pub const center_cube_vertices_base = [24]@Vector(3, f32){
     @Vector(3, f32){ 1.0, 1.0, 1.0 },
     @Vector(3, f32){ -1.0, 1.0, 1.0 },
     @Vector(3, f32){ -1.0, 1.0, -1.0 },
@@ -37,6 +37,33 @@ pub const cube_vertices_base = [24]@Vector(3, f32){
     @Vector(3, f32){ -1.0, 1.0, -1.0 },
     @Vector(3, f32){ -1.0, -1.0, -1.0 },
     @Vector(3, f32){ 1.0, -1.0, -1.0 },
+};
+
+pub const origin_cube_vertices_base = [24]@Vector(3, f32){
+    @Vector(3, f32){ 2.0, 2.0, 2.0 },
+    @Vector(3, f32){ 0.0, 2.0, 2.0 },
+    @Vector(3, f32){ 0.0, 2.0, 0.0 },
+    @Vector(3, f32){ 2.0, 2.0, 0.0 },
+    @Vector(3, f32){ 2.0, 0.0, 2.0 },
+    @Vector(3, f32){ 0.0, 0.0, 2.0 },
+    @Vector(3, f32){ 0.0, 0.0, 0.0 },
+    @Vector(3, f32){ 2.0, 0.0, 0.0 },
+    @Vector(3, f32){ 2.0, 2.0, 2.0 },
+    @Vector(3, f32){ 2.0, 0.0, 2.0 },
+    @Vector(3, f32){ 2.0, 0.0, 0.0 },
+    @Vector(3, f32){ 2.0, 2.0, 0.0 },
+    @Vector(3, f32){ 0.0, 2.0, 2.0 },
+    @Vector(3, f32){ 0.0, 0.0, 2.0 },
+    @Vector(3, f32){ 0.0, 0.0, 0.0 },
+    @Vector(3, f32){ 0.0, 2.0, 0.0 },
+    @Vector(3, f32){ 2.0, 2.0, 2.0 },
+    @Vector(3, f32){ 0.0, 2.0, 2.0 },
+    @Vector(3, f32){ 0.0, 0.0, 2.0 },
+    @Vector(3, f32){ 2.0, 0.0, 2.0 },
+    @Vector(3, f32){ 2.0, 2.0, 0.0 },
+    @Vector(3, f32){ 0.0, 2.0, 0.0 },
+    @Vector(3, f32){ 0.0, 0.0, 0.0 },
+    @Vector(3, f32){ 2.0, 0.0, 0.0 },
 };
 
 pub const Renderer = struct {
@@ -102,19 +129,19 @@ pub const Renderer = struct {
     }
 
     /// Deinits the struct then kills the program
-    pub fn deinit(this: Renderer) void {
+    pub fn deinit(self: Renderer) void {
         std.debug.print("Gracefully exiting...\n", .{});
-        _ = sdl.SDL_GL_DestroyContext(this.context);
-        sdl.SDL_DestroyWindow(this.window);
+        _ = sdl.SDL_GL_DestroyContext(self.context);
+        sdl.SDL_DestroyWindow(self.window);
         sdl.SDL_Quit();
     }
 
     /// Process polled queued events
-    pub fn handleEvents(this: *Renderer) void {
+    pub fn handleEvents(self: *Renderer) void {
         var event: sdl.SDL_Event = undefined;
         while (sdl.SDL_PollEvent(&event)) {
             if (event.type == sdl.SDL_EVENT_QUIT) {
-                this.is_running = false;
+                self.is_running = false;
             }
             if (event.type == sdl.SDL_EVENT_KEY_DOWN) {
                 switch (event.key.key) {
@@ -151,7 +178,7 @@ pub const Renderer = struct {
         const rad: f32 = std.math.degreesToRadians(deg);
         const distance = 10;
         const camera_x = @sin(rad) * distance;
-        const camera_y = @sin(rad) * distance;
+        const camera_y = @sin(rad) * distance / 2;
         const camera_z = @cos(rad) * distance;
         gl.glMatrixMode(gl.GL_MODELVIEW);
         gl.glLoadIdentity();
